@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jogo da Velha</title>
+
+    <style>
+    :root {
+        --cor0: #F6D9FF;
+        --cor1: #EAA6FF;
+        --cor2: #B25CCC;
+        --cor3: #2A0D33;
+        --cor4: #500567;
+    }
+
+    body {
+        background-color: var(--cor0);
+        font-family: Arial, sans-serif;
+        color: var(--cor3);
+    }
+
+    h1 {
+        text-align: center;
+        background-color: var(--cor1);
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    h2 {
+        text-align: center;
+    }
+
+    div.opcoes {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .opcao {
+        width: auto;
+        height: auto;
+        padding: 12px 18px;
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--cor0);
+        background-color: var(--cor4);
+        border: 2px solid var(--cor2);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .opcao:hover {
+        background-color: var(--cor2);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    div.jogo {
+        display: grid;
+        grid-template-columns: repeat(3, 80px);
+        gap: 8px;
+        justify-content: center;
+        background-color: var(--cor1);
+        padding: 25px;
+        margin: 20px auto;
+        width: fit-content;
+        border-radius: 25px;
+        box-shadow: 0 5px 15px #50056733;
+    }
+
+    div.jogo button {
+        width: 80px;
+        height: 80px;
+        font-size: 35px;
+        font-weight: bold;
+        color: var(--cor0);
+        background-color: var(--cor3);
+        border: 2px solid var(--cor2);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    div.jogo button:hover {
+        background-color: var(--cor4);
+        border-color: var(--cor0);
+        box-shadow: 0 0 10px var(--cor2);
+        transform: scale(1.05);
+    }
+
+    div.jogo button:active {
+        transform: scale(0.95);
+    }
+    </style>
+</head>
+<body>
+
+    <h1>JOGO DA VELHA</h1>
+
+    <div class="opcoes">
+        <button class="opcao" onclick="modo = 'jogador'; reiniciar()">
+            Dois jogadores
+        </button>
+    
+        <button class="opcao" onclick="modo = 'maquina'; reiniciar()">
+            Contra a máquina
+        </button>
+    </div>
+
+    <h2 id="mensagem">Escolha um modo de jogo!</h2>
+
+    <div class="jogo">
+        <button onclick="jogar(0)"></button>
+        <button onclick="jogar(1)"></button>
+        <button onclick="jogar(2)"></button>
+
+        <button onclick="jogar(3)"></button>
+        <button onclick="jogar(4)"></button>
+        <button onclick="jogar(5)"></button>
+
+        <button onclick="jogar(6)"></button>
+        <button onclick="jogar(7)"></button>
+        <button onclick="jogar(8)"></button>
+    </div>
+
+    <br><br>
+
+    <div class="opcoes">
+    <button class="opcao" onclick="reiniciar()">Reiniciar</button>
+    </div>
+
+    <script>
+        let vez = "X";
+        let modo = "";
+        let tabuleiro = ["", "", "", "", "", "", "", "", ""];
+        let fim = false;
+        let proximo = "X";
+
+        function jogar(posicao) {
+            if (modo == "" || tabuleiro[posicao] != "" || fim) return;
+            if (modo == "maquina" && vez == "O") return;
+
+            marcar(posicao, vez);
+
+            if (verificar()) return;
+
+            vez = vez == "X" ? "O" : "X";
+
+            if (modo == "maquina" && vez == "O") {
+                maquinaJogar();
+            } else {
+                document.getElementById("mensagem").innerText = "Vez do " + vez;
+            }
+        }
+
+        function maquinaJogar() {
+            let escolha = -1;
+
+            for (let i = 0; i < 9; i++) {
+                if (tabuleiro[i] == "") {
+                    tabuleiro[i] = "O";
+                    if (temVitoria("O")) escolha = i;
+                    tabuleiro[i] = "";
+                    if (escolha != -1) break;
+                }
+            }
+
+            if (escolha == -1) {
+                for (let i = 0; i < 9; i++) {
+                    if (tabuleiro[i] == "") {
+                        tabuleiro[i] = "X";
+                        if (temVitoria("X")) escolha = i;
+                        tabuleiro[i] = "";
+                        if (escolha != -1) break;
+                    }
+                }
+            }
+
+            if (escolha == -1) {
+                let livres = [];
+
+                for (let i = 0; i < 9; i++) {
+                    if (tabuleiro[i] == "") livres.push(i);
+                }
+
+                if (livres.length == 0) return;
+                escolha = livres[Math.floor(Math.random() * livres.length)];
+            }
+
+            marcar(escolha, "O");
+
+            if (verificar()) return;
+
+            vez = "X";
+            document.getElementById("mensagem").innerText = "Sua vez (X)";
+        }
+
+        function marcar(posicao, jogador) {
+            tabuleiro[posicao] = jogador;
+            document.getElementsByTagName("button")[posicao + 2].innerText = jogador;
+        }
+
+        function temVitoria(jogador) {
+            let linhas = [
+                [0,1,2], [3,4,5], [6,7,8],
+                [0,3,6], [1,4,7], [2,5,8],
+                [0,4,8], [2,4,6]
+            ];
+
+            for (let linha of linhas) {
+                if (
+                    tabuleiro[linha[0]] == jogador &&
+                    tabuleiro[linha[1]] == jogador &&
+                    tabuleiro[linha[2]] == jogador
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function verificar() {
+            if (temVitoria(vez)) {
+                document.getElementById("mensagem").innerText = vez + " venceu!";
+                fim = true;
+                proximo = vez == "X" ? "O" : "X";
+                return true;
+            }
+
+            if (!tabuleiro.includes("")) {
+                document.getElementById("mensagem").innerText = "Empate!";
+                fim = true;
+                proximo = proximo == "X" ? "O" : "X";
+                return true;
+            }
+
+            return false;
+        }
+
+        function reiniciar() {
+            vez = proximo;
+            tabuleiro = ["", "", "", "", "", "", "", "", ""];
+            fim = false;
+
+            let botoes = document.getElementsByTagName("button");
+
+            for (let i = 2; i < 11; i++) {
+                botoes[i].innerText = "";
+            }
+
+            document.getElementById("mensagem").innerText = "Vez do " + vez;
+
+            if (modo == "maquina" && vez == "O") {
+                maquinaJogar();
+            }
+        }
+    </script>
+
+</body>
+</html>
